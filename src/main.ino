@@ -13,49 +13,58 @@ byte ctrlpins[] = {12, 14, 27, 19, 18, 5, 17};
 #define PINS 7 //number of these pins
 
 Chaplex myCharlie(ctrlpins, PINS); //control instance
-
-// [0]  = D7 - left laurel
-// [1]  = D14 - right laurel
-// [2]  = D21 - right laurel
-// [3]  = D28 - right laurel
-// [4]  = D35 - left laurel
 // [5]  = D42 - right yellow
+// [11] = D29 - bottom laurel (top of the two)
+// [13] = D37 - left yellow light
+// [18] = D41 - right blue
+// [27] = D38 - left blue
+// [31] = D40 - right red top
+// [33] = D11 - bottom blue
+// [41] = D39 - top left red
+
+//left laurel
+// [0]  = D7 - left laurel
+// [4]  = D35 - left laurel
 // [6]  = D6  - left laurel
 // [7]  = D1 - left laurel
 // [8]  = D8 - left laurel
-// [9]  = D15 - right laurel
-// [10] = D22 - right laurel
-// [11] = D29 - bottom laurel (top of the two)
-// [12] = D36 - right laurel
-// [13] = D37 - left yellow light
-// [14] = D13 - right laurel
-// [15] = D20 - right laurel
-// [16] = D27 - right laurel
+// [12] = D36 - left laurel?
 // [17] = D34 - left laurel
-// [18] = D41 - right blue
 // [19] = D5  - left laurel
-// [20] = D12 - right laurel
 // [21] = D2 - left laurel
 // [22] = D9 - left laurel
-// [23] = D16 - right laurel
-// [24] = D23 - right laurel
 // [25] = D30 - left laurel
 // [26] = D31 - left laurel
-// [27] = D38 - left blue
-// [28] = D19 - right laurel
-// [29] = D26 - right laurel
 // [30] = D33 - left laurel
-// [31] = D40 - right red top
 // [32] = D4 - left laurel
-// [33] = D11 - bottom blue
-// [34] = D18 - right laurel
 // [35] = D3 - left laurel
 // [36] = D10 - left laurel
-// [37] = D17 - right laurel
-// [38] = D24 - right laurel
-// [39] = D25 - right laurel
 // [40] = D32 - left laurel
-// [41] = D39 - top left red
+
+//right laurel
+// [1]  = D14 - right laurel {B,C}
+// [2]  = D21 - right laurel {C,D}
+// [3]  = D28 - right laurel {D,E}
+// [9]  = D15 - right laurel {D,C}
+// [10] = D22 - right laurel {E,D}
+// [14] = D13 - right laurel {A,C}
+// [15] = D20 - right laurel {B,D}
+// [16] = D27 - right laurel {C,E}
+// [20] = D12 - right laurel {H,B}
+// [23] = D16 - right laurel {E,C}
+// [24] = D23 - right laurel {G,D}
+// [28] = D19 - right laurel {A,D}
+// [29] = D26 - right laurel {B,E}
+// [34] = D18 - right laurel {H,C}
+// [37] = D17 - right laurel {G,C}
+// [38] = D24 - right laurel{H,D}
+// [39] = D25 - right laurel {A,E}
+
+charlieLed rightLaurel[18] = {
+  {H,B}, {D,E}, {A,C}, {C,E}, {B,C}, {B,E}, {D,C}, {A,E},
+  {E,C}, {H,D}, {G,C}, {H,C}, {G,D}, {A,D}, {E,D}, {B,D},
+  {C,D}
+};
 
 charlieLed myLeds[42]  = {
   {A,B},  {B,C},  {C,D},  {D,E},  {E,G},  {G,H},  {H,A},
@@ -75,9 +84,11 @@ void setup() {
 #define NEWPATTERN 100        //100 ms for new LED pattern
 void loop() {
   if (millis()-goneTime >= NEWPATTERN) {
-    for (byte i=0; i<100; i++)
-      myCharlie.ledWrite(myLeds[i], (byte)random(0,2));
+    for (byte i=0; i<17; i++){
+      myCharlie.ledWrite(rightLaurel[i], 1);
+      myCharlie.outRow();
+      delay(100);
+    }
     goneTime = millis();
   }
-  myCharlie.outRow();
 }
