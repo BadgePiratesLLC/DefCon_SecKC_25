@@ -22,25 +22,6 @@ Chaplex myCharlie(ctrlpins, PINS); //control instance
 // [33] = D11 - bottom blue
 // [41] = D39 - top left red
 
-//left laurel
-// [0]  = D7 - left laurel
-// [4]  = D35 - left laurel
-// [6]  = D6  - left laurel
-// [7]  = D1 - left laurel
-// [8]  = D8 - left laurel
-// [12] = D36 - left laurel?
-// [17] = D34 - left laurel
-// [19] = D5  - left laurel
-// [21] = D2 - left laurel
-// [22] = D9 - left laurel
-// [25] = D30 - left laurel
-// [26] = D31 - left laurel
-// [30] = D33 - left laurel
-// [32] = D4 - left laurel
-// [35] = D3 - left laurel
-// [36] = D10 - left laurel
-// [40] = D32 - left laurel
-
 //right laurel
 // [1]  = D14 - right laurel {B,C}
 // [2]  = D21 - right laurel {C,D}
@@ -59,6 +40,33 @@ Chaplex myCharlie(ctrlpins, PINS); //control instance
 // [37] = D17 - right laurel {G,C}
 // [38] = D24 - right laurel{H,D}
 // [39] = D25 - right laurel {A,E}
+
+
+//left laurel
+// [0]  = D7  - left laurel {A,B}
+// [4]  = D35 - left laurel {E,G}
+// [6]  = D6  - left laurel {H,A}
+// [7]  = D1  - left laurel {B,A}
+// [8]  = D8  - left laurel {C,B}
+// [12] = D36 - left laurel {H,G}
+// [17] = D34 - left laurel {D,G}
+// [19] = D5  - left laurel {G,A}
+// [21] = D2  - left laurel {C,A}
+// [22] = D9  - left laurel {D,B}
+// [25] = D30 - left laurel {H,E}
+// [26] = D31 - left laurel {A,G}
+// [30] = D33 - left laurel {C,G}
+// [32] = D4  - left laurel {E,A}
+// [35] = D3  - left laurel {D,A}
+// [36] = D10 - left laurel {E,B}
+// [40] = D32 - left laurel {B,G}
+
+
+charlieLed leftLaurel[18] = {
+  {E,B}, {H,E}, {D,B}, {A,G}, {C,B}, {B,G}, {A,B}, {C,G},
+  {H,A}, {G,A}, {D,G}, {E,A}, {E,G}, {D,A}, {H,G}, {C,A},
+  {B,A}
+};
 
 charlieLed rightLaurel[18] = {
   {H,B}, {D,E}, {A,C}, {C,E}, {B,C}, {B,E}, {D,C}, {A,E},
@@ -86,8 +94,8 @@ void loop() {
   if (millis()-goneTime >= NEWPATTERN) {
     for (byte i=0; i<17; i++){
       myCharlie.ledWrite(rightLaurel[i], 1);
+      myCharlie.ledWrite(leftLaurel[i], 1);
       myCharlie.outRow();
-      delay(100);
     }
     goneTime = millis();
   }
