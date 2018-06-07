@@ -11,6 +11,7 @@
 byte ctrlpins[] = {12, 14, 27, 19, 18, 5, 17};
 
 #define PINS 7 //number of these pins
+#define FRAME_TIME 50
 
 Chaplex myCharlie(ctrlpins, PINS); //control instance
 // [5]  = D42 - right yellow
@@ -61,42 +62,47 @@ Chaplex myCharlie(ctrlpins, PINS); //control instance
 // [36] = D10 - left laurel {E,B}
 // [40] = D32 - left laurel {B,G}
 
-
-charlieLed leftLaurel[18] = {
+charlieLed myLeds[42]  = {
+  // left laurel
   {E,B}, {H,E}, {D,B}, {A,G}, {C,B}, {B,G}, {A,B}, {C,G},
   {H,A}, {G,A}, {D,G}, {E,A}, {E,G}, {D,A}, {H,G}, {C,A},
-  {B,A}
-};
-
-charlieLed rightLaurel[18] = {
+  {B,A},
+  // right laurel
   {H,B}, {D,E}, {A,C}, {C,E}, {B,C}, {B,E}, {D,C}, {A,E},
   {E,C}, {H,D}, {G,C}, {H,C}, {G,D}, {A,D}, {E,D}, {B,D},
   {C,D}
 };
 
-charlieLed myLeds[42]  = {
-  {A,B},  {B,C},  {C,D},  {D,E},  {E,G},  {G,H},  {H,A},
-  {B,A},  {C,B},  {D,C},  {E,D},  {G,E},  {H,G},  {A,H},
-  {A,C},  {B,D},  {C,E},  {D,G},  {E,H},  {G,A},  {H,B},
-  {C,A},  {D,B},  {E,C},  {G,D},  {H,E},  {A,G},  {B,H},
-  {A,D},  {B,E},  {C,G},  {D,H},  {E,A},  {G,B},  {H,C},
-  {D,A},  {E,B},  {G,C},  {H,D},  {A,E},  {B,G},  {C,H}
-};
-
-long goneTime;
 void setup() {
   randomSeed(analogRead(0));
-  goneTime = millis();
 }
 
-#define NEWPATTERN 100        //100 ms for new LED pattern
+#define NUM_LAUREL 17
+int numOfLEDsToShow = 0;
+unsigned long time;
 void loop() {
-  if (millis()-goneTime >= NEWPATTERN) {
-    for (byte i=0; i<17; i++){
-      myCharlie.ledWrite(rightLaurel[i], 1);
-      myCharlie.ledWrite(leftLaurel[i], 1);
-      myCharlie.outRow();
-    }
-    goneTime = millis();
+
+  myCharlie.allClear();
+  myCharlie.outRow();
+
+  Serial.print(numOfLEDsToShow);
+  if (numOfLEDsToShow < NUM_LAUREL) {
+    numOfLEDsToShow = numOfLEDsToShow + 1;
+  } else {
+    numOfLEDsToShow = 0;
   }
+
+  time = millis();
+  int burnTime = time + FRAME_TIME;
+  Serial.println(time);
+  while(time < burnTime) {
+    time = millis();
+    for (int i = 0; i < numOfLEDsToShow; i++) {
+      myCharlie.ledWrite(myLeds[i], 1);
+      myCharlie.ledWrite(myLeds[i+17], 1);
+    }
+
+    myCharlie.outRow();
+  }
+  Serial.println(time);
 }
