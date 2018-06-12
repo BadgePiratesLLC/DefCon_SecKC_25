@@ -119,6 +119,7 @@ void pingPongAnimation(){
         myCharlie.allClear();
         loopCount++;
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
+        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
         else myCharlie.allClear();
         myCharlie.outRow();
       }
