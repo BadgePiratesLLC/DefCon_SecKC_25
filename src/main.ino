@@ -1,4 +1,5 @@
 #include "Chaplex.h"
+#include <TTBOUNCE.h>
 //************************************************************
 // this is a simple example that uses the easyMesh library
 //
@@ -25,6 +26,7 @@
 #define G 5 // 5
 #define H 6 // 17
 
+TTBOUNCE theButton = TTBOUNCE(13);          //create button instance and attach digital pin 3
 
 #define NUM_LAUREL 17
 #define PINS 7 //number of these pins
@@ -75,10 +77,18 @@ Task taskSendMessage( TASK_SECOND * 1, TASK_FOREVER, &sendMessage ); // start wi
 // Task to blink the number of nodes
 // Task blinkNoNodes;
 bool onFlag = false;
+int numButtonClicks = 0;
+int animationState = 0;
 
 void setup() {
   Serial.begin(115200);
 
+  theButton.setDebounceInterval(50);       //set debouncing time in ms (default well be 10ms)
+  theButton.setActiveLow();                //digitalRead == LOW means button is pressed (default will be activeHigh)
+  theButton.enablePullup();                //enable internal pullup resistor
+
+  // Setup button timers (all in milliseconds / ms)
+  // (These are default if not set, but changeable for convenience)
 
   //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   //mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION | COMMUNICATION);  // set before init() so that you can see startup messages
@@ -119,9 +129,37 @@ void setup() {
 }
 
 void loop() {
-  userScheduler.execute(); // it will run mesh scheduler as well
   mesh.update();
+  userScheduler.execute(); // it will run mesh scheduler as well
+
+  theButton.update();
+
+  Serial.print("state: ");
+  Serial.println(theButton.read());
+  delay(10);
+
+  if(numButtonClicks == 1) {
+    if(animationState > 1) animationState = 0;
+    animationState++;
+    Serial.printf("BUTTON CLICKED ONCE: %d", animationState);
+  }
+  //
+  // // blink faster if double clicked
+  // if(numButtonClicks == 2) animationState = 2;
+  //
+  // // blink even faster if triple clicked
+  // if(numButtonClicks == 3) ledState = (millis()/200)%2;
+  //
+  // // slow blink (must hold down button. 1 second long blinks)
+  // if(numButtonClicks == -1) ledState = (millis()/1000)%2;
+  //
+  // // slower blink (must hold down button. 2 second loong blinks)
+  // if(numButtonClicks == -2) ledState = (millis()/2000)%2;
+  //
+  // // even slower blink (must hold down button. 3 second looong blinks)
+  // if(numButtonClicks == -3) ledState = (millis()/3000)%2;
   snowfall();
+  reverseSnowfall();
 }
 
 void sendMessage() {
@@ -184,95 +222,97 @@ void delayReceivedCallback(uint32_t from, int32_t delay) {
 }
 
 void snowfall(){
-  unsigned long loopCount = 0;                          // used to determine duty cycle of each LED
-  unsigned long timeNow = millis();                     //
-  unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
-  while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
-    myCharlie.allClear();
-    loopCount++;
-    // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
-    myCharlie.ledWrite(myLeds[snowCurrent], 1);
-    myCharlie.ledWrite(myLeds[snowCurrent + 17], 1);
-    // each member of tail has reduced duty cycle, and never get to the final position
-    if(!(loopCount % 3)) if(snowCurrent+1 <=16 && snowCurrent+1 > 0) myCharlie.ledWrite(myLeds[snowCurrent+1], 1);
-    if(!(loopCount % 6)) if(snowCurrent+2 <=16 && snowCurrent+2 > 0) myCharlie.ledWrite(myLeds[snowCurrent+2], 1);
-    if(!(loopCount % 9)) if(snowCurrent+3 <=16 && snowCurrent+3 > 0) myCharlie.ledWrite(myLeds[snowCurrent+3], 1);
-    if(!(loopCount % 12)) if(snowCurrent+4 <=16 && snowCurrent+4 > 0) myCharlie.ledWrite(myLeds[snowCurrent+4], 1);
+  if(animationState == 0) {
+    unsigned long loopCount = 0;                          // used to determine duty cycle of each LED
+    unsigned long timeNow = millis();                     //
+    unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
+    while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
+      myCharlie.allClear();
+      loopCount++;
+      // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
+      myCharlie.ledWrite(myLeds[snowCurrent], 1);
+      myCharlie.ledWrite(myLeds[snowCurrent + 17], 1);
+      // each member of tail has reduced duty cycle, and never get to the final position
+      if(!(loopCount % 3)) if(snowCurrent+1 <=16 && snowCurrent+1 > 0) myCharlie.ledWrite(myLeds[snowCurrent+1], 1);
+      if(!(loopCount % 6)) if(snowCurrent+2 <=16 && snowCurrent+2 > 0) myCharlie.ledWrite(myLeds[snowCurrent+2], 1);
+      if(!(loopCount % 9)) if(snowCurrent+3 <=16 && snowCurrent+3 > 0) myCharlie.ledWrite(myLeds[snowCurrent+3], 1);
+      if(!(loopCount % 12)) if(snowCurrent+4 <=16 && snowCurrent+4 > 0) myCharlie.ledWrite(myLeds[snowCurrent+4], 1);
 
-    if(!(loopCount % 3)) if(snowCurrent+1 <=16 && snowCurrent+1 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+1], 1);
-    if(!(loopCount % 6)) if(snowCurrent+2 <=16 && snowCurrent+2 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+2], 1);
-    if(!(loopCount % 9)) if(snowCurrent+3 <=16 && snowCurrent+3 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+3], 1);
-    if(!(loopCount % 12)) if(snowCurrent+4 <=16 && snowCurrent+4 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+4], 1);
-    myCharlie.outRow();
-  }
-
-  snowCurrent--;
-  if(snowCurrent<=0) {                          // start over
-    // now fade out the snowflake in that final position #19
-    for(int dutyCycle = 3; dutyCycle <= 15; dutyCycle += 3) {
-      loopCount = 0;
-      timeNow = millis();
-      while(millis() - timeNow < (displayTime+snowCurrent*2)) { // fade out as slow as animation has achieved by now
-        myCharlie.allClear();
-        loopCount++;
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[0], 1);
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[17], 1);
-        else myCharlie.allClear();
-        myCharlie.outRow();
-      }
+      if(!(loopCount % 3)) if(snowCurrent+1 <=16 && snowCurrent+1 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+1], 1);
+      if(!(loopCount % 6)) if(snowCurrent+2 <=16 && snowCurrent+2 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+2], 1);
+      if(!(loopCount % 9)) if(snowCurrent+3 <=16 && snowCurrent+3 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+3], 1);
+      if(!(loopCount % 12)) if(snowCurrent+4 <=16 && snowCurrent+4 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+4], 1);
+      myCharlie.outRow();
     }
-    snowCurrent = 16;
-    myCharlie.allClear();
-    myCharlie.outRow();            // and then rinse, repeat...after a short pause
+
+    snowCurrent--;
+    if(snowCurrent<=0) {                          // start over
+      // now fade out the snowflake in that final position #19
+      for(int dutyCycle = 3; dutyCycle <= 15; dutyCycle += 3) {
+        loopCount = 0;
+        timeNow = millis();
+        while(millis() - timeNow < (displayTime+snowCurrent*2)) { // fade out as slow as animation has achieved by now
+          myCharlie.allClear();
+          loopCount++;
+          if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[0], 1);
+          if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[17], 1);
+          else myCharlie.allClear();
+          myCharlie.outRow();
+        }
+      }
+      snowCurrent = 16;
+      myCharlie.allClear();
+      myCharlie.outRow();            // and then rinse, repeat...after a short pause
+    }
   }
 }
-//
-// void reverseSnowfall(){
-//   while(true){
-//     unsigned long loopCount = 0;                          // used to determine duty cycle of each LED
-//     unsigned long timeNow = millis();                     //
-//     unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
-//     while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
-//       myCharlie.allClear();
-//       loopCount++;
-//       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
-//       myCharlie.ledWrite(myLeds[current], 1);
-//       myCharlie.ledWrite(myLeds[current + 17], 1);
-//       // each member of tail has reduced duty cycle, and never get to the final position
-//       if(!(loopCount % 3)) if(current-1 >=0 && current-1 < 16) myCharlie.ledWrite(myLeds[current-1], 1);
-//       if(!(loopCount % 6)) if(current-2 >=0 && current-2 < 16) myCharlie.ledWrite(myLeds[current-2], 1);
-//       if(!(loopCount % 9)) if(current-3 >=0 && current-3 < 16) myCharlie.ledWrite(myLeds[current-3], 1);
-//       if(!(loopCount % 12)) if(current-4 >=0 && current-4 < 16) myCharlie.ledWrite(myLeds[current-4], 1);
-//
-//       if(!(loopCount % 3)) if(current-1 >=0 && current-1 < 16) myCharlie.ledWrite(myLeds[current+17-1], 1);
-//       if(!(loopCount % 6)) if(current-2 >=0 && current-2 < 16) myCharlie.ledWrite(myLeds[current+17-2], 1);
-//       if(!(loopCount % 9)) if(current-3 >=0 && current-3 < 16) myCharlie.ledWrite(myLeds[current+17-3], 1);
-//       if(!(loopCount % 12)) if(current-4 >=0 && current-4 < 16) myCharlie.ledWrite(myLeds[current+17-4], 1);
-//       myCharlie.outRow();
-//     }
-//
-//     current++;
-//     if(current>=16) {                          // start over
-//       // now fade out the snowflake in that final position #19
-//       for(int dutyCycle = 3; dutyCycle <= 15; dutyCycle += 3) {
-//         loopCount = 0;
-//         timeNow = millis();
-//         while(millis() - timeNow < (displayTime+current*2)) { // fade out as slow as animation has achieved by now
-//           myCharlie.allClear();
-//           loopCount++;
-//           if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
-//           if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
-//           else myCharlie.allClear();
-//           myCharlie.outRow();
-//         }
-//       }
-//       current = 0;
-//       myCharlie.allClear();
-//       myCharlie.outRow();            // and then rinse, repeat...after a short pause
-//     }
-//   }
-// }
-//
+
+void reverseSnowfall(){
+  if(animationState == 1){
+    unsigned long loopCount = 0;                          // used to determine duty cycle of each LED
+    unsigned long timeNow = millis();                     //
+    unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
+    while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
+      myCharlie.allClear();
+      loopCount++;
+      // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
+      myCharlie.ledWrite(myLeds[current], 1);
+      myCharlie.ledWrite(myLeds[current + 17], 1);
+      // each member of tail has reduced duty cycle, and never get to the final position
+      if(!(loopCount % 3)) if(current-1 >=0 && current-1 < 16) myCharlie.ledWrite(myLeds[current-1], 1);
+      if(!(loopCount % 6)) if(current-2 >=0 && current-2 < 16) myCharlie.ledWrite(myLeds[current-2], 1);
+      if(!(loopCount % 9)) if(current-3 >=0 && current-3 < 16) myCharlie.ledWrite(myLeds[current-3], 1);
+      if(!(loopCount % 12)) if(current-4 >=0 && current-4 < 16) myCharlie.ledWrite(myLeds[current-4], 1);
+
+      if(!(loopCount % 3)) if(current-1 >=0 && current-1 < 16) myCharlie.ledWrite(myLeds[current+17-1], 1);
+      if(!(loopCount % 6)) if(current-2 >=0 && current-2 < 16) myCharlie.ledWrite(myLeds[current+17-2], 1);
+      if(!(loopCount % 9)) if(current-3 >=0 && current-3 < 16) myCharlie.ledWrite(myLeds[current+17-3], 1);
+      if(!(loopCount % 12)) if(current-4 >=0 && current-4 < 16) myCharlie.ledWrite(myLeds[current+17-4], 1);
+      myCharlie.outRow();
+    }
+
+    current++;
+    if(current>=16) {                          // start over
+      // now fade out the snowflake in that final position #19
+      for(int dutyCycle = 3; dutyCycle <= 15; dutyCycle += 3) {
+        loopCount = 0;
+        timeNow = millis();
+        while(millis() - timeNow < (displayTime+current*2)) { // fade out as slow as animation has achieved by now
+          myCharlie.allClear();
+          loopCount++;
+          if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
+          if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
+          else myCharlie.allClear();
+          myCharlie.outRow();
+        }
+      }
+      current = 0;
+      myCharlie.allClear();
+      myCharlie.outRow();            // and then rinse, repeat...after a short pause
+    }
+  }
+}
+
 // void defaultAnimation(){
 //   while(true){
 //     myCharlie.allClear();
