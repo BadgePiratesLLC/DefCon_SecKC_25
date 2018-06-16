@@ -10,6 +10,7 @@
 //
 //************************************************************
 #include <painlessMesh.h>
+#include <PinButton.h>
 
 // some gpio pin that is connected to an LED...
 // on my rig, this is 5, change to the right number of your LED.
@@ -28,6 +29,8 @@
 #define NUM_LAUREL 17
 #define PINS 7 //number of these pins
 #define FRAME_TIME 50
+
+PinButton myButton(13);
 
 int current = 0;
 int snowCurrent = 16;
@@ -122,21 +125,22 @@ void setup() {
 void loop() {
   mesh.update();
   userScheduler.execute(); // it will run mesh scheduler as well
+  myButton.update();
 
-  int sensorVal = digitalRead(13);
+  if (myButton.isSingleClick()) {
+    // Only triggers on a single, short click (i.e. not
+    // on the first click of a double-click, nor on a long click).
+    if(animationState >= 2) animationState = 0;
+    else {
+      animationState++;
+    }
+    Serial.println(animationState);
+  }
 
-  if (sensorVal == HIGH) {
-    Serial.printf("HGIH");
-  }
-  else{
-    Serial.printf("LOW");
+  if (myButton.isDoubleClick()) {
+    Serial.println("double");
   }
 
-  if(numButtonClicks == 1) {
-    if(animationState > 1) animationState = 0;
-    animationState++;
-    Serial.printf("BUTTON CLICKED ONCE: %d", animationState);
-  }
   //
   // // blink faster if double clicked
   // if(numButtonClicks == 2) animationState = 2;
@@ -154,6 +158,7 @@ void loop() {
   // if(numButtonClicks == -3) ledState = (millis()/3000)%2;
   snowfall();
   reverseSnowfall();
+  defaultAnimation();
 }
 
 void sendMessage() {
@@ -307,36 +312,36 @@ void reverseSnowfall(){
   }
 }
 
-// void defaultAnimation(){
-//   while(true){
-//     myCharlie.allClear();
-//     myCharlie.outRow();
-//
-//     Serial.print(numOfLEDsToShow);
-//     if (numOfLEDsToShow < NUM_LAUREL) {
-//       numOfLEDsToShow = numOfLEDsToShow + 1;
-//     } else {
-//       numOfLEDsToShow = 0;
-//     }
-//
-//     myTime = millis();
-//     unsigned long burnTime = myTime + FRAME_TIME;
-//     Serial.println(myTime);
-//     while(myTime < burnTime) {
-//       myTime = millis();
-//       for (int i = 0; i < numOfLEDsToShow; i++) {
-//         myCharlie.ledWrite(myLeds[i], 1);
-//         myCharlie.ledWrite(myLeds[i+17], 1);
-//       }
-//
-//       myCharlie.outRow();
-//     }
-//     Serial.println(myTime);
-//   }
-//
-//
-//   Serial.println(myTime);
-// }
+void defaultAnimation(){
+  if(animationState == 2){
+    myCharlie.allClear();
+    myCharlie.outRow();
+
+    Serial.print(numOfLEDsToShow);
+    if (numOfLEDsToShow < NUM_LAUREL) {
+      numOfLEDsToShow = numOfLEDsToShow + 1;
+    } else {
+      numOfLEDsToShow = 0;
+    }
+
+    myTime = millis();
+    unsigned long burnTime = myTime + FRAME_TIME;
+    Serial.println(myTime);
+    while(myTime < burnTime) {
+      myTime = millis();
+      for (int i = 0; i < numOfLEDsToShow; i++) {
+        myCharlie.ledWrite(myLeds[i], 1);
+        myCharlie.ledWrite(myLeds[i+17], 1);
+      }
+
+      myCharlie.outRow();
+    }
+    Serial.println(myTime);
+  }
+
+
+  Serial.println(myTime);
+}
 //
 // void tailChase() {
 //   while(true){
