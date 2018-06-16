@@ -1,5 +1,4 @@
 #include "Chaplex.h"
-#include <TTBOUNCE.h>
 //************************************************************
 // this is a simple example that uses the easyMesh library
 //
@@ -25,8 +24,6 @@
 #define E 4 // 18
 #define G 5 // 5
 #define H 6 // 17
-
-TTBOUNCE theButton = TTBOUNCE(13);          //create button instance and attach digital pin 3
 
 #define NUM_LAUREL 17
 #define PINS 7 //number of these pins
@@ -83,13 +80,7 @@ int animationState = 0;
 void setup() {
   Serial.begin(115200);
 
-  theButton.setDebounceInterval(50);       //set debouncing time in ms (default well be 10ms)
-  theButton.setActiveLow();                //digitalRead == LOW means button is pressed (default will be activeHigh)
-  theButton.enablePullup();                //enable internal pullup resistor
-
-  // Setup button timers (all in milliseconds / ms)
-  // (These are default if not set, but changeable for convenience)
-
+  pinMode(13,INPUT_PULLUP);
   //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   //mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION | COMMUNICATION);  // set before init() so that you can see startup messages
   mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION);  // set before init() so that you can see startup messages
@@ -132,11 +123,14 @@ void loop() {
   mesh.update();
   userScheduler.execute(); // it will run mesh scheduler as well
 
-  theButton.update();
+  int sensorVal = digitalRead(13);
 
-  Serial.print("state: ");
-  Serial.println(theButton.read());
-  delay(10);
+  if (sensorVal == HIGH) {
+    Serial.printf("HGIH");
+  }
+  else{
+    Serial.printf("LOW");
+  }
 
   if(numButtonClicks == 1) {
     if(animationState > 1) animationState = 0;
