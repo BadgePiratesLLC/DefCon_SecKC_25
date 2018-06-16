@@ -32,6 +32,9 @@
 
 PinButton myButton(13);
 
+int isMeshOn = 0;
+int toggleMesh = 0;
+
 int current = 0;
 int snowCurrent = 16;
 int numOfLEDsToShow = 0;
@@ -86,17 +89,7 @@ void setup() {
   pinMode(13,INPUT_PULLUP);
   //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   //mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION | COMMUNICATION);  // set before init() so that you can see startup messages
-  mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION);  // set before init() so that you can see startup messages
 
-  mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler, MESH_PORT);
-  mesh.onReceive(&receivedCallback);
-  mesh.onNewConnection(&newConnectionCallback);
-  mesh.onChangedConnections(&changedConnectionCallback);
-  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-  mesh.onNodeDelayReceived(&delayReceivedCallback);
-
-  userScheduler.addTask( taskSendMessage );
-  taskSendMessage.enable();
 
   // blinkNoNodes.set(BLINK_PERIOD, (mesh.getNodeList().size() + 1) * 2, []() {
   //     // If on, switch off, else switch on
@@ -139,6 +132,7 @@ void loop() {
 
   if (myButton.isDoubleClick()) {
     Serial.println("double");
+    toggleMesh = 1;
   }
 
   //
@@ -156,9 +150,36 @@ void loop() {
   //
   // // even slower blink (must hold down button. 3 second looong blinks)
   // if(numButtonClicks == -3) ledState = (millis()/3000)%2;
+  initMesh();
   snowfall();
   reverseSnowfall();
   defaultAnimation();
+}
+
+void initMesh() {
+  if (toggleMesh == 1 && isMeshOn == 0) {
+    mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION);  // set before init() so that you can see startup messages
+
+    mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler, MESH_PORT);
+    mesh.onReceive(&receivedCallback);
+    mesh.onNewConnection(&newConnectionCallback);
+    mesh.onChangedConnections(&changedConnectionCallback);
+    mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+    mesh.onNodeDelayReceived(&delayReceivedCallback);
+
+    userScheduler.addTask( taskSendMessage );
+    taskSendMessage.enable();
+    toggleMesh = 0;
+    isMeshOn = 1;
+  }
+}
+
+void disableMesh() {
+  if(toggleMesh == 1 && isMeshOn == 1) {
+    mesh.stop();
+    toggleMesh = 0;
+    isMeshOn = 0;
+  }
 }
 
 void sendMessage() {
