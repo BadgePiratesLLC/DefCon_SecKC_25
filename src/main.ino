@@ -49,6 +49,28 @@ byte ctrlpins[] = {12, 14, 27, 19, 18, 5, 17};
 
 Chaplex myCharlie(ctrlpins, PINS); //control instance
 
+
+
+// [5]  = D42 - right yellow
+// [11] = D29 - bottom laurel (top of the two)
+// [13] = D37 - left yellow light
+// [18] = D41 - right blue
+// [27] = D38 - left blue
+// [31] = D40 - right red top
+// [33] = D11 - bottom blue
+// [41] = D39 - top left red {G,B}
+
+// charlieLed oldLEDS[42]  = {
+//   {A,B},  {B,C},  {C,D},  {D,E},  {E,G},  {G,H},  {H,A},
+//   {B,A},  {C,B},  {D,C},  {E,D},  {G,E},  {H,G},  {A,H},
+//   {A,C},  {B,D},  {C,E},  {D,G},  {E,H},  {G,A},  {H,B},
+//   {C,A},  {D,B},  {E,C},  {G,D},  {H,E},  {A,G},  {B,H},
+//   {A,D},  {B,E},  {C,G},  {D,H},  {E,A},  {G,B},  {H,C},
+//   {D,A},  {E,B},  {G,C},  {H,D},  {A,E},  {B,G},  {C,H}
+// };
+
+charlieLed meshIndicatorLed[1] = { {G,B} };
+
 charlieLed myLeds[42]  = {
   // left laurel
   {E,B}, {H,E}, {D,B}, {A,G}, {C,B}, {B,G}, {A,B}, {C,G},
@@ -116,18 +138,18 @@ void setup() {
 }
 
 void loop() {
-  mesh.update();
+  if(isMeshOn == 1) mesh.update();
   userScheduler.execute(); // it will run mesh scheduler as well
   myButton.update();
 
   if (myButton.isSingleClick()) {
+    Serial.println("single");
     // Only triggers on a single, short click (i.e. not
     // on the first click of a double-click, nor on a long click).
     if(animationState >= 2) animationState = 0;
     else {
       animationState++;
     }
-    Serial.println(animationState);
   }
 
   if (myButton.isDoubleClick()) {
@@ -135,7 +157,6 @@ void loop() {
     toggleMesh = 1;
   }
 
-  //
   // // blink faster if double clicked
   // if(numButtonClicks == 2) animationState = 2;
   //
@@ -151,13 +172,30 @@ void loop() {
   // // even slower blink (must hold down button. 3 second looong blinks)
   // if(numButtonClicks == -3) ledState = (millis()/3000)%2;
   initMesh();
+  disableMesh();
   snowfall();
   reverseSnowfall();
   defaultAnimation();
+  meshIndicator();
+}
+
+void meshIndicator() {
+  if(isMeshOn == 1) {
+
+    unsigned long timeNow = millis();                     //
+    unsigned long displayTime = 10;    // milliseconds to spend at each focus LED in descent
+    while(millis()- timeNow < displayTime) {  // animation slows toward end
+      myCharlie.allClear();
+      // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
+      myCharlie.ledWrite(meshIndicatorLed[0], 1);
+      myCharlie.outRow();
+    }
+  }
 }
 
 void initMesh() {
   if (toggleMesh == 1 && isMeshOn == 0) {
+    Serial.println("attempting to enable mesh");
     mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION);  // set before init() so that you can see startup messages
 
     mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler, MESH_PORT);
@@ -176,6 +214,7 @@ void initMesh() {
 
 void disableMesh() {
   if(toggleMesh == 1 && isMeshOn == 1) {
+    Serial.println("attempting to disable mesh");
     mesh.stop();
     toggleMesh = 0;
     isMeshOn = 0;
@@ -250,6 +289,7 @@ void snowfall(){
       myCharlie.allClear();
       loopCount++;
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
+      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.ledWrite(myLeds[snowCurrent], 1);
       myCharlie.ledWrite(myLeds[snowCurrent + 17], 1);
       // each member of tail has reduced duty cycle, and never get to the final position
@@ -296,6 +336,7 @@ void reverseSnowfall(){
       myCharlie.allClear();
       loopCount++;
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
+      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.ledWrite(myLeds[current], 1);
       myCharlie.ledWrite(myLeds[current + 17], 1);
       // each member of tail has reduced duty cycle, and never get to the final position
@@ -338,7 +379,6 @@ void defaultAnimation(){
     myCharlie.allClear();
     myCharlie.outRow();
 
-    Serial.print(numOfLEDsToShow);
     if (numOfLEDsToShow < NUM_LAUREL) {
       numOfLEDsToShow = numOfLEDsToShow + 1;
     } else {
@@ -347,21 +387,16 @@ void defaultAnimation(){
 
     myTime = millis();
     unsigned long burnTime = myTime + FRAME_TIME;
-    Serial.println(myTime);
     while(myTime < burnTime) {
       myTime = millis();
       for (int i = 0; i < numOfLEDsToShow; i++) {
         myCharlie.ledWrite(myLeds[i], 1);
         myCharlie.ledWrite(myLeds[i+17], 1);
       }
-
+      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.outRow();
     }
-    Serial.println(myTime);
   }
-
-
-  Serial.println(myTime);
 }
 //
 // void tailChase() {
