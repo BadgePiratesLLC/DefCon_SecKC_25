@@ -181,7 +181,6 @@ void meshIndicator() {
     unsigned long timeNow = millis();                     //
     unsigned long displayTime = 10;    // milliseconds to spend at each focus LED in descent
     while(millis()- timeNow < displayTime) {  // animation slows toward end
-      myCharlie.allClear();
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
       myCharlie.ledWrite(meshIndicatorLed[0], 1);
     }
@@ -275,7 +274,6 @@ void snowfall(){
   unsigned long timeNow = millis();                     //
   unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
   while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
-    myCharlie.allClear();
     loopCount++;
     // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
     myCharlie.ledWrite(myLeds[snowCurrent], 1);
@@ -299,15 +297,13 @@ void snowfall(){
       loopCount = 0;
       timeNow = millis();
       while(millis() - timeNow < (displayTime+snowCurrent*2)) { // fade out as slow as animation has achieved by now
-        myCharlie.allClear();
         loopCount++;
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[0], 1);
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[17], 1);
-        else myCharlie.allClear();
+        else clearLaurels();
       }
     }
     snowCurrent = 16;
-    clearLEDS(); // and then rinse, repeat...after a short pause
   }
 }
 
@@ -316,7 +312,7 @@ void reverseSnowfall() {
   unsigned long timeNow = millis();                     //
   unsigned long displayTime = 10 + random(90);          // milliseconds to spend at each focus LED in descent
   while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
-    myCharlie.allClear();
+    clearLaurels();
     loopCount++;
     // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
     myCharlie.ledWrite(myLeds[current], 1);
@@ -340,21 +336,19 @@ void reverseSnowfall() {
       loopCount = 0;
       timeNow = millis();
       while(millis() - timeNow < (displayTime+current*2)) { // fade out as slow as animation has achieved by now
-        myCharlie.allClear();
+        clearLaurels();
         loopCount++;
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
-        else myCharlie.allClear();
+        else clearLaurels();
       }
     }
     current = 0;
-    myCharlie.allClear();
+    clearLaurels();
   }
 }
 
-void defaultAnimation(){
-  clearLEDS();
-
+void defaultAnimation() {
   if (numOfLEDsToShow < NUM_LAUREL) {
     numOfLEDsToShow = numOfLEDsToShow + 1;
   } else {
@@ -370,8 +364,11 @@ void defaultAnimation(){
       myCharlie.ledWrite(myLeds[i+17], 1);
     }
   }
+  clearLaurels();
 }
 
-void clearLEDS() {
-  myCharlie.allClear();
+void clearLaurels() {
+  for (int i = 0; i < (sizeof(myLeds) / sizeof(*myLeds)); i++) {
+    myCharlie.ledWrite(myLeds[i], 0);
+  }
 }
