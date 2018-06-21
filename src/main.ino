@@ -85,36 +85,30 @@ bool onFlag = false;
 int numButtonClicks = 0;
 int animationState = 0;
 
+volatile int interruptCounter;
+int totalInterruptCounter;
+
+hw_timer_t * timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+void IRAM_ATTR onTimer() {
+  portENTER_CRITICAL_ISR(&timerMux);
+  interruptCounter++;
+  portEXIT_CRITICAL_ISR(&timerMux);
+  myCharlie.outRow();
+}
+
 void setup() {
   Serial.begin(115200);
 
   pinMode(13,INPUT_PULLUP);
-  //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
-  //mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION | COMMUNICATION);  // set before init() so that you can see startup messages
-
-
-  // blinkNoNodes.set(BLINK_PERIOD, (mesh.getNodeList().size() + 1) * 2, []() {
-  //     // If on, switch off, else switch on
-  //     if (onFlag)
-  //       onFlag = false;
-  //     else
-  //       onFlag = true;
-  //     blinkNoNodes.delay(BLINK_DURATION);
-  //
-  //     if (blinkNoNodes.isLastIteration()) {
-  //       // Finished blinking. Reset task for next run
-  //       // blink number of nodes (including this node) times
-  //       blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-  //       // Calculate delay based on current mesh time and BLINK_PERIOD
-  //       // This results in blinks between nodes being synced
-  //       blinkNoNodes.enableDelayed(BLINK_PERIOD -
-  //           (mesh.getNodeTime() % (BLINK_PERIOD*1000))/1000);
-  //     }
-  // });
-  // userScheduler.addTask(blinkNoNodes);
-  // blinkNoNodes.enable();
 
   randomSeed(analogRead(A0));
+
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 100, true);
+  timerAlarmEnable(timer);
 }
 
 void loop() {
@@ -159,6 +153,15 @@ void loop() {
       defaultAnimation();
       break;
   }
+
+  if (interruptCounter > 0) {
+    portENTER_CRITICAL(&timerMux);
+    interruptCounter--;
+    portEXIT_CRITICAL(&timerMux);
+    totalInterruptCounter++;
+    Serial.print("An interrupt as occurred. Total number: ");
+    Serial.println(totalInterruptCounter);
+  }
 }
 
 void meshIndicator() {
@@ -170,7 +173,6 @@ void meshIndicator() {
       myCharlie.allClear();
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
       myCharlie.ledWrite(meshIndicatorLed[0], 1);
-      myCharlie.outRow();
     }
   }
 }
@@ -277,7 +279,6 @@ void snowfall(){
     if(!(loopCount % 6)) if(snowCurrent+2 <=16 && snowCurrent+2 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+2], 1);
     if(!(loopCount % 9)) if(snowCurrent+3 <=16 && snowCurrent+3 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+3], 1);
     if(!(loopCount % 12)) if(snowCurrent+4 <=16 && snowCurrent+4 > 0) myCharlie.ledWrite(myLeds[snowCurrent+17+4], 1);
-    myCharlie.outRow();
   }
 
   snowCurrent--;
@@ -292,12 +293,10 @@ void snowfall(){
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[0], 1);
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[17], 1);
         else myCharlie.allClear();
-        myCharlie.outRow();
       }
     }
     snowCurrent = 16;
-    myCharlie.allClear();
-    myCharlie.outRow();            // and then rinse, repeat...after a short pause
+    clearLEDS(); // and then rinse, repeat...after a short pause
   }
 }
 
@@ -321,7 +320,6 @@ void reverseSnowfall() {
     if(!(loopCount % 6)) if(current-2 >=0 && current-2 < 16) myCharlie.ledWrite(myLeds[current+17-2], 1);
     if(!(loopCount % 9)) if(current-3 >=0 && current-3 < 16) myCharlie.ledWrite(myLeds[current+17-3], 1);
     if(!(loopCount % 12)) if(current-4 >=0 && current-4 < 16) myCharlie.ledWrite(myLeds[current+17-4], 1);
-    myCharlie.outRow();
   }
 
   current++;
@@ -336,12 +334,10 @@ void reverseSnowfall() {
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
         if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
         else myCharlie.allClear();
-        myCharlie.outRow();
       }
     }
     current = 0;
     myCharlie.allClear();
-    myCharlie.outRow();            // and then rinse, repeat...after a short pause
   }
 }
 
@@ -362,11 +358,9 @@ void defaultAnimation(){
       myCharlie.ledWrite(myLeds[i], 1);
       myCharlie.ledWrite(myLeds[i+17], 1);
     }
-    myCharlie.outRow();
   }
 }
 
 void clearLEDS() {
   myCharlie.allClear();
-  myCharlie.outRow();
 }
