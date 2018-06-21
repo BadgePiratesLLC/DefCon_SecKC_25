@@ -289,7 +289,6 @@ void snowfall(){
       myCharlie.allClear();
       loopCount++;
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
-      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.ledWrite(myLeds[snowCurrent], 1);
       myCharlie.ledWrite(myLeds[snowCurrent + 17], 1);
       // each member of tail has reduced duty cycle, and never get to the final position
@@ -336,7 +335,6 @@ void reverseSnowfall(){
       myCharlie.allClear();
       loopCount++;
       // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
-      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.ledWrite(myLeds[current], 1);
       myCharlie.ledWrite(myLeds[current + 17], 1);
       // each member of tail has reduced duty cycle, and never get to the final position
@@ -393,7 +391,6 @@ void defaultAnimation(){
         myCharlie.ledWrite(myLeds[i], 1);
         myCharlie.ledWrite(myLeds[i+17], 1);
       }
-      if(isMeshOn == 0) myCharlie.ledWrite(meshIndicatorLed[0], 1);
       myCharlie.outRow();
     }
   }
