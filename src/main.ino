@@ -298,9 +298,12 @@ void snowfall(){
       timeNow = millis();
       while(millis() - timeNow < (displayTime+snowCurrent*2)) { // fade out as slow as animation has achieved by now
         loopCount++;
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[0], 1);
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[17], 1);
-        else clearLaurels();
+        if(!(loopCount % dutyCycle)) {
+          myCharlie.ledWrite(myLeds[0], 1);
+          myCharlie.ledWrite(myLeds[17], 1);
+        } else {
+          clearLaurels();
+        }
       }
     }
     snowCurrent = 16;
@@ -336,11 +339,13 @@ void reverseSnowfall() {
       loopCount = 0;
       timeNow = millis();
       while(millis() - timeNow < (displayTime+current*2)) { // fade out as slow as animation has achieved by now
-        clearLaurels();
         loopCount++;
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[16], 1);
-        if(!(loopCount % dutyCycle)) myCharlie.ledWrite(myLeds[33], 1);
-        else clearLaurels();
+        if(!(loopCount % dutyCycle)) {
+          myCharlie.ledWrite(myLeds[16], 1);
+          myCharlie.ledWrite(myLeds[33], 1);
+        } else {
+          clearLaurels();
+        }
       }
     }
     current = 0;
