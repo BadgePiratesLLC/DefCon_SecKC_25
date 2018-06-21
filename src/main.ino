@@ -84,6 +84,7 @@ Task taskSendMessage( TASK_SECOND * 1, TASK_FOREVER, &sendMessage ); // start wi
 bool onFlag = false;
 int numButtonClicks = 0;
 int animationState = 0;
+int hallEnabled = 0;
 
 volatile int interruptCounter;
 int totalInterruptCounter;
@@ -141,6 +142,8 @@ void loop() {
     }
   }
 
+  getHallReading();
+
   switch(animationState) {
     case 0:
       snowfall();
@@ -159,9 +162,17 @@ void loop() {
     interruptCounter--;
     portEXIT_CRITICAL(&timerMux);
     totalInterruptCounter++;
-    Serial.print("An interrupt as occurred. Total number: ");
-    Serial.println(totalInterruptCounter);
   }
+}
+
+void getHallReading() {
+  int measurement = 0;
+
+    measurement = hallRead();
+
+    if(measurement >= 50) hallEnabled = 1;
+    Serial.print("Hall sensor measurement: ");
+    Serial.println(measurement);
 }
 
 void meshIndicator() {
