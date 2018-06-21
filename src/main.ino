@@ -14,7 +14,7 @@
 
 // some gpio pin that is connected to an LED...
 // on my rig, this is 5, change to the right number of your LED.
-#define   MESH_SSID       "whateverYouLike"
+#define   MESH_SSID       "badgepirates-mesh-network"
 #define   MESH_PASSWORD   "somethingSneaky"
 #define   MESH_PORT       5555
 
