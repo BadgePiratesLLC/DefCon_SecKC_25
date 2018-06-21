@@ -49,7 +49,17 @@ byte ctrlpins[] = {12, 14, 27, 19, 18, 5, 17};
 
 Chaplex myCharlie(ctrlpins, PINS); //control instance
 
-charlieLed meshIndicatorLed[1] = { {G,B} };
+charlieLed indicatorLeds[9] = {
+  {G,B},
+  {G,H},
+  {G,E}, // wifi light
+  {A,H},
+  {E,H},
+  {B,H},
+  {D,H},
+  {G,B},
+  {C,H}
+};
 
 charlieLed myLeds[42]  = {
   // left laurel
@@ -136,10 +146,12 @@ void loop() {
     Serial.println("double");
     toggleMesh = 1;
     if (isMeshOn == 0) {
+      Serial.println("mesh turned on");
       isMeshOn = 1;
       // initMesh();
     } else {
       isMeshOn = 0;
+      Serial.println("mesh turned off");
       // disableMesh();
     }
   }
@@ -177,13 +189,9 @@ void getHallReading() {
 
 void meshIndicator() {
   if(isMeshOn == 1) {
-    Serial.println('lighting mesh indicator');
-    unsigned long timeNow = millis();                     //
-    unsigned long displayTime = 10;    // milliseconds to spend at each focus LED in descent
-    while(millis()- timeNow < displayTime) {  // animation slows toward end
-      // the "snowflake" gets full duty cycle.  When it gets to the end, hold it at the end until the tail collapses
-      myCharlie.ledWrite(meshIndicatorLed[0], 1);
-    }
+    myCharlie.ledWrite(indicatorLeds[3], 1);
+  } else {
+    myCharlie.ledWrite(indicatorLeds[3], 0);
   }
 }
 
@@ -373,7 +381,7 @@ void defaultAnimation() {
 }
 
 void clearLaurels() {
-  for (int i = 0; i < (sizeof(myLeds) / sizeof(*myLeds)); i++) {
+  for (int i = 0; i < (sizeof(myLeds) / sizeof(myLeds[0])); i++) {
     myCharlie.ledWrite(myLeds[i], 0);
   }
 }
