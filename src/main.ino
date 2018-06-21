@@ -136,14 +136,16 @@ void loop() {
     Serial.println("double");
     toggleMesh = 1;
     if (isMeshOn == 0) {
-      initMesh();
+      isMeshOn = 1;
+      // initMesh();
     } else {
-      disableMesh();
+      isMeshOn = 0;
+      // disableMesh();
     }
   }
 
   getHallReading();
-
+  meshIndicator();
   switch(animationState) {
     case 0:
       snowfall();
@@ -171,13 +173,11 @@ void getHallReading() {
     measurement = hallRead();
 
     if(measurement >= 50) hallEnabled = 1;
-    Serial.print("Hall sensor measurement: ");
-    Serial.println(measurement);
 }
 
 void meshIndicator() {
   if(isMeshOn == 1) {
-
+    Serial.println('lighting mesh indicator');
     unsigned long timeNow = millis();                     //
     unsigned long displayTime = 10;    // milliseconds to spend at each focus LED in descent
     while(millis()- timeNow < displayTime) {  // animation slows toward end
