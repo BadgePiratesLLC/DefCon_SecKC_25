@@ -51,7 +51,7 @@ Chaplex myCharlie(ctrlpins, PINS); //control instance
 
 charlieLed meshIndicatorLed[1] = { {G,B} };
 
-charlieLed myLeds[42]  = {
+charlieLed myLeds[34]  = {
   // left laurel
   {E,B}, {H,E}, {D,B}, {A,G}, {C,B}, {B,G}, {A,B}, {C,G},
   {H,A}, {G,A}, {D,G}, {E,A}, {E,G}, {D,A}, {H,G}, {C,A},
@@ -60,6 +60,15 @@ charlieLed myLeds[42]  = {
   {H,B}, {D,E}, {A,C}, {C,E}, {B,C}, {B,E}, {D,C}, {A,E},
   {E,C}, {H,D}, {G,C}, {H,C}, {G,D}, {A,D}, {E,D}, {B,D},
   {C,D}
+};
+
+charlieLed allLeds[42]  = {
+  {A,B},  {B,C},  {C,D},  {D,E},  {E,G},  {G,H},  {H,A},
+  {B,A},  {C,B},  {D,C},  {E,D},  {G,E},  {H,G},  {A,H},
+  {A,C},  {B,D},  {C,E},  {D,G},  {E,H},  {G,A},  {H,B},
+  {C,A},  {D,B},  {E,C},  {G,D},  {H,E},  {A,G},  {B,H},
+  {A,D},  {B,E},  {C,G},  {D,H},  {E,A},  {G,B},  {H,C},
+  {D,A},  {E,B},  {G,C},  {H,D},  {A,E},  {B,G},  {C,H}
 };
 
 // Prototypes
@@ -85,6 +94,8 @@ bool onFlag = false;
 int numButtonClicks = 0;
 int animationState = 0;
 int hallEnabled = 0;
+int numUnlockedAnimations = 2;
+long goneTime;
 
 volatile int interruptCounter;
 int totalInterruptCounter;
@@ -124,7 +135,7 @@ void loop() {
     Serial.println("single");
     // Only triggers on a single, short click (i.e. not
     // on the first click of a double-click, nor on a long click).
-    if(animationState >= 2) {
+    if(animationState >= numUnlockedAnimations) {
       animationState = 0;
     }
     else {
@@ -154,8 +165,10 @@ void loop() {
       reverseSnowfall();
       break;
     case 2:
-    default:
       defaultAnimation();
+      break;
+    case 3:
+      flashyFlashy();
       break;
   }
 
@@ -172,7 +185,10 @@ void getHallReading() {
 
     measurement = hallRead();
 
-    if(measurement >= 50) hallEnabled = 1;
+    if(measurement >= 50) {
+      numUnlockedAnimations = 3;
+      animationState = 3;
+    }
 }
 
 void meshIndicator() {
@@ -267,6 +283,15 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 void delayReceivedCallback(uint32_t from, int32_t delay) {
   Serial.printf("Delay to node %u is %d us\n", from, delay);
+}
+
+void flashyFlashy(){
+    unsigned long timeNow = millis();                     //
+    unsigned long displayTime = 1000 + random(90);          // milliseconds to spend at each focus LED in descent
+    while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
+      for (byte i=0; i<8; i++)
+        myCharlie.ledWrite(allLeds[(byte)random(0,42)], (byte)random(0,2));
+    }
 }
 
 void snowfall(){
