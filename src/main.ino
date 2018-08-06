@@ -189,7 +189,12 @@ void loop() {
 
   if (myButton.isSingleClick()) {
     Serial.println("single");
-    animationState++;
+    if(animationState >= 2) {
+      animationState = 0;
+    }
+    else {
+      animationState++;
+    }
   }
 
 
