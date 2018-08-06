@@ -11,6 +11,10 @@
 //************************************************************
 #include <painlessMesh.h>
 #include <PinButton.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_IS31FL3731.h>
 
 // some gpio pin that is connected to an LED...
 // on my rig, this is 5, change to the right number of your LED.
@@ -44,6 +48,43 @@ unsigned long myTime;
 int tailPosition = 0;
 bool direction = true; // true is counting up, false is counting down
 bool side = true; // true is right, false is left
+
+//LED MATRIX SETUP
+Adafruit_IS31FL3731_Wing ledmatrix = Adafruit_IS31FL3731_Wing();
+// The lookup table to make the brightness changes be more visible
+uint8_t sweep[] = {1, 2, 3, 4, 6, 8, 10, 15, 20, 30, 40, 60, 60, 40, 30, 20, 15, 10, 8, 6, 4, 3, 2, 1};
+
+static const uint8_t PROGMEM
+  smile_bmp[] =
+  { B00111100,
+    B01000010,
+    B10100101,
+    B10000001,
+    B10100101,
+    B10011001,
+    B01000010,
+    B00111100 },
+  neutral_bmp[] =
+  { B00111100,
+    B01000010,
+    B10100101,
+    B10000001,
+    B10111101,
+    B10000001,
+    B01000010,
+    B00111100 },
+  frown_bmp[] =
+  { B00111100,
+    B01000010,
+    B10100101,
+    B10000001,
+    B10011001,
+    B10100101,
+    B01000010,
+    B00111100 };
+
+
+//end adafruit matrix stuff
 
 byte ctrlpins[] = {12, 14, 27, 19, 18, 5, 17};
 
@@ -123,6 +164,11 @@ void IRAM_ATTR onTimer() {
 void setup() {
   Serial.begin(115200);
 
+  ledmatrix.begin();
+
+  ledmatrix.setRotation(0);
+  ledmatrix.clear();
+  ledmatrix.drawBitmap(3, 0, smile_bmp, 8, 8, 255);
   pinMode(13,INPUT_PULLUP);
 
   randomSeed(analogRead(A0));
@@ -143,15 +189,9 @@ void loop() {
 
   if (myButton.isSingleClick()) {
     Serial.println("single");
-    // Only triggers on a single, short click (i.e. not
-    // on the first click of a double-click, nor on a long click).
-    if(animationState >= numUnlockedAnimations) {
-      animationState = 0;
-    }
-    else {
-      animationState++;
-    }
+    animationState++;
   }
+
 
   if (myButton.isDoubleClick()) {
     Serial.println("double");
@@ -167,7 +207,7 @@ void loop() {
     }
   }
 
-  getHallReading();
+  // getHallReading();
   meshIndicator();
   switch(animationState) {
     case 0:
@@ -179,9 +219,6 @@ void loop() {
     case 2:
       defaultAnimation();
       break;
-    case 3:
-      flashyFlashy();
-      break;
   }
 
   if (interruptCounter > 0) {
@@ -190,17 +227,6 @@ void loop() {
     portEXIT_CRITICAL(&timerMux);
     totalInterruptCounter++;
   }
-}
-
-void getHallReading() {
-  int measurement = 0;
-
-    measurement = hallRead();
-
-    if(measurement >= 50) {
-      numUnlockedAnimations = 3;
-      animationState = 3;
-    }
 }
 
 void meshIndicator() {
@@ -291,15 +317,6 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 void delayReceivedCallback(uint32_t from, int32_t delay) {
   Serial.printf("Delay to node %u is %d us\n", from, delay);
-}
-
-void flashyFlashy(){
-    unsigned long timeNow = millis();                     //
-    unsigned long displayTime = 1000 + random(90);          // milliseconds to spend at each focus LED in descent
-    while(millis()- timeNow < (displayTime+current*2)) {  // animation slows toward end
-      for (byte i=0; i<8; i++)
-        myCharlie.ledWrite(allLeds[(byte)random(0,42)], (byte)random(0,2));
-    }
 }
 
 void snowfall(){
